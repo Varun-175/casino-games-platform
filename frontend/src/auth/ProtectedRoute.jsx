@@ -1,7 +1,8 @@
-// src/auth/ProtectedRoute.jsx
+// frontend/src/auth/ProtectedRoute.jsx
+
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import Loader from "../components/Loader";
+import Loader from "../components/Loader/Loader";
 
 const ProtectedRoute = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -12,11 +13,11 @@ const ProtectedRoute = () => {
   }
 
   return isAuthenticated ? (
-    <Outlet context={{ from: location.state?.from?.pathname || "/" }} />
+    <Outlet />
   ) : (
-    <Navigate 
-      to="/login" 
-      replace 
+    <Navigate
+      to="/login"
+      replace
       state={{ from: location.pathname }}
     />
   );

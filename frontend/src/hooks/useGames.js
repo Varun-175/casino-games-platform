@@ -1,48 +1,70 @@
-// src/hooks/useGames.js (upgraded)
+// frontend/src/hooks/useGames.js
+
 import { useEffect, useState, useCallback } from "react";
 import { games as fetchGames } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
 
 const useGames = (params = {}) => {
-  const [data, setData] = useState([]);
+  const [games, setGames] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isAuthenticated } = useAuth();
 
-  const loadGames = useCallback(async (abortSignal) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await fetchGames(params, abortSignal);
-      setData(res.data || res);  // Handle both {data} and direct array
-    } catch (err) {
-      if (!abortSignal?.aborted) {
-        setError(err.response?.data?.message || 'Failed to load games');
+  const loadGames = useCallback(
+    async (signal) => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        /**
+         * Backend response shape:
+         * {
+         *   success: true,
+         *   data: {
+         *     items: [...],
+         *     pagination: {...}
+         *   }
+         * }
+         */
+        const res = await fetchGames(params, signal);
+
+        if (signal?.aborted) return;
+
+        const items = res?.data?.items;
+        const pageInfo = res?.data?.pagination;
+
+        setGames(Array.isArray(items) ? items : []);
+        setPagination(pageInfo || null);
+      } catch (err) {
+        if (!signal?.aborted) {
+          setError(err?.message || "Failed to load games");
+        }
+      } finally {
+        if (!signal?.aborted) {
+          setLoading(false);
+        }
       }
-    } finally {
-      if (!abortSignal?.aborted) {
-        setLoading(false);
-      }
-    }
-  }, [JSON.stringify(params)]);
+    },
+    [JSON.stringify(params)]
+  );
 
   useEffect(() => {
-    const abortController = new AbortController();
-    
-    loadGames(abortController.signal);
+    const controller = new AbortController();
+    loadGames(controller.signal);
 
-    return () => {
-      abortController.abort();
-    };
+    return () => controller.abort();
   }, [loadGames]);
 
-  const refetch = () => loadGames();
+  const refetch = useCallback(() => {
+    const controller = new AbortController();
+    loadGames(controller.signal);
+  }, [loadGames]);
 
-  return { 
-    games: data, 
-    loading, 
-    error, 
-    refetch 
+  return {
+    games,        // ✅ actual games array
+    pagination,  // ✅ { total, page, limit, pages }
+    loading,
+    error,
+    refetch,
   };
 };
 

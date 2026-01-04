@@ -1,0 +1,99 @@
+/* src/components/FilterBar/FilterBar.css */
+.filter-bar {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 3rem 2.5rem;
+  margin: 2.5rem auto 4rem;
+  max-width: 2000px;
+  border-radius: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;;
+  top: 80px;
+  z-index: 100;
+  animation: slideDown 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.filters-wrapper {
+  display: flex;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 250px;
+}
+
+.filter-group label {
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.filter-input,
+.filter-select {
+  padding: 1.2rem 1.5rem;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2d1b5a;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.filter-input::placeholder {
+  color: rgba(45, 27, 90, 0.5);
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #ff6b9d;
+  box-shadow: 0 0 0 4px rgba(255, 107, 157, 0.25), 0 10px 30px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+}
+
+.filter-input:hover,
+.filter-select:hover {
+  border-color: #4ecdc4;
+}
+
+@media (max-width: 768px) {
+  .filter-bar {
+    padding: 2rem 1.5rem;
+    margin: 1.5rem 1rem 3rem;
+  }
+  
+  .filters-wrapper {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    min-width: auto;
+  }
+}

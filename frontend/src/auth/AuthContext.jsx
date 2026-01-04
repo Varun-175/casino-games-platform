@@ -1,17 +1,18 @@
-// src/auth/AuthContext.jsx
+// frontend/src/auth/AuthContext.jsx
+
 import { createContext, useContext, useEffect, useState } from "react";
-import apiClient from "../api/client";
+import apiClient, { auth } from "../api/client";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchMe = async () => {
     try {
-      const res = await apiClient.get("/auth/me");
+      const res = await auth.me(); // { success, data }
       setUser(res.data);
       setIsAuthenticated(true);
     } catch {
@@ -23,43 +24,64 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Global auto-logout on 401
+  useEffect(() => {
+    const handleLogout = () => {
+      localStorage.removeItem("access_token");
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener("logout", handleLogout);
+    return () => window.removeEventListener("logout", handleLogout);
+  }, []);
+
+  // Initial auth restore
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
       setIsLoading(false);
       return;
     }
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     fetchMe();
   }, []);
 
   const login = async (payload) => {
     try {
-      const res = await apiClient.post("/auth/login", payload);
-      localStorage.setItem("access_token", res.data.access_token);
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${res.data.access_token}`;
+      const res = await auth.login(payload); // { success, data }
+      const token = res.data.token;
+
+      localStorage.setItem("access_token", token);
       await fetchMe();
+
       return { success: true };
-    } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Login failed' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.message || "Login failed",
+      };
     }
   };
 
   const register = async (payload) => {
     try {
-      const res = await apiClient.post("/auth/register", payload);
-      localStorage.setItem("access_token", res.data.access_token);
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${res.data.access_token}`;
+      const res = await auth.register(payload); // { success, data }
+      const token = res.data.token;
+
+      localStorage.setItem("access_token", token);
       await fetchMe();
+
       return { success: true };
-    } catch (error) {
-      return { success: false, error: error.response?.data?.message || 'Registration failed' };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.message || "Registration failed",
+      };
     }
   };
 
   const logout = () => {
     localStorage.removeItem("access_token");
-    delete apiClient.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -81,9 +103,9 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used within AuthProvider");
   }
-  return context;
+  return ctx;
 };
